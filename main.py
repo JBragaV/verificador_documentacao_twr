@@ -6,9 +6,9 @@ import openpyxl
 
 def abrir_excel():
     # endereco_arquivo = r"D:\projetos\pessoal\sistema_paim" \
-    #                    r"\Documentação Atualizador Publicações\publicacoes_torre_sdco.xlsx"
+                       # r"\Documentação Atualizador Publicações\publicacoes_torre_sdco.xlsx"
     # endereco_arquivo = r"Z:\publicacoes_torre_sdco.xlsx"
-    endereco_arquivo = r'D:\Jocimar\TWR_SDCO\publicacoes_torre_sdco.xlsx'
+    endereco_arquivo = r'D:\Jocimar\TWR_SDCO_PROJETOS\publicacoes_torre_sdco.xlsx'
     return openpyxl.open(endereco_arquivo)
 
 
@@ -21,18 +21,36 @@ def retorna_indices(arquivo_):
     return [coluna_tipo, coluna_numero, coluna_data, coluna_atualizada]
 
 
+def total_lista_documento(arquivo_, coluna):
+    total_linha = 0
+    for i in range(6, 100000):
+        valor_celula = arquivo_.worksheets[0].cell(row=i, column=coluna).value
+        if valor_celula is None:
+            break
+        total_linha += 1
+    return total_linha
+
+
+def progress_bar(progress, total):
+    porcent = 100 * (progress / float(total))
+    bar = "█" * int(porcent) + "-" * (100 - int(porcent))
+    print(f"\r|{bar}| {porcent:.2f}%", end='\r')
+
+
 def verificador_documentacao_atualizado(arquivo_):
     c_tipo, c_numero, c_data, c_atualizada = retorna_indices(arquivo_)
     docs_desatualizado = list()
-    for i in range(6, 100000):
-        documento_tipo = arquivo.worksheets[0].cell(row=i, column=c_tipo).value
+    total_linha = total_lista_documento(arquivo_, c_tipo)
+    progress_bar(0, total_linha)
+    for i in range(6, total_linha+6):
+        documento_tipo = arquivo_.worksheets[0].cell(row=i, column=c_tipo).value
         if documento_tipo is None:
             break
-        documento_numero = arquivo.worksheets[0].cell(row=i, column=c_numero).value
+        documento_numero = arquivo_.worksheets[0].cell(row=i, column=c_numero).value
         if "aic" in documento_tipo or "AIC" in documento_tipo:
             documento_numero = documento_numero.replace("/", "")
-        documento_data = arquivo.worksheets[0].cell(row=i, column=c_data).value
-        documento_atualizado = arquivo.worksheets[0].cell(row=i, column=c_atualizada).value
+        documento_data = arquivo_.worksheets[0].cell(row=i, column=c_data).value
+        documento_atualizado = arquivo_.worksheets[0].cell(row=i, column=c_atualizada).value
         data_formatada = converte_data(documento_data)
 
         # print(f"Documento: {documento_tipo} {documento_numero} é da data de {data_formatada} "
@@ -41,7 +59,7 @@ def verificador_documentacao_atualizado(arquivo_):
                                      [i, c_atualizada])
         if doc != "":
             docs_desatualizado.append(doc)
-        # print("="*30)
+        progress_bar(i-5, total_linha)
     return docs_desatualizado
 
 
@@ -102,12 +120,12 @@ def atualiza_planilha(arquivo_, lista_indices):
     # print(lista_indices)
     arquivo_.worksheets[0].cell(row=lista_indices[0], column=lista_indices[1], value="Não")
     # arquivo_.save(r"D:\projetos\pessoal\sistema_paim\Documentação Atualizador Publicações\publicacoes_torre_sdco.xlsx")
-    arquivo_.save(r'D:\Jocimar\TWR_SDCO\publicacoes_torre_sdco.xlsx')
+    arquivo_.save(r'D:\Jocimar\TWR_SDCO_PROJETOS\publicacoes_torre_sdco.xlsx')
 
 
 if __name__ == '__main__':
-    arquivo = abrir_excel()
-    documentos = verificador_documentacao_atualizado(arquivo)
+    db_excel = abrir_excel()
+    documentos = verificador_documentacao_atualizado(db_excel)
     if len(documentos) > 0:
         print("As seguintes publicações estão desatualizadas!")
         for i in range(len(documentos)):
